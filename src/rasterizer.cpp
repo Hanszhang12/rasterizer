@@ -88,7 +88,7 @@ namespace CGL {
         float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
         float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
         float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-        if (l0 >= 0 && l1 >= 0 && l2 >= 0) {
+        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
           fill_pixel((int)floor(point_x), (int)floor(point_y), color);
         }
       }
