@@ -22,9 +22,9 @@ namespace CGL {
     // NOTE: You are not required to implement proper supersampling for points and lines
     // It is sufficient to use the same color for all supersamples of a pixel for points and lines (not triangles)
 
-    // sample_buffer[y * width + x] = c;
+    sample_buffer[y * width * this->sample_rate + (x * sqrt(this->sample_rate))] = c;
 
-    sample_buffer[(y * width * this->sample_rate) + (x * sqrt(this->sample_rate))] = c;
+    // sample_buffer[(y * width * this->sample_rate) + (x * (int)sqrt(this->sample_rate))] = c;
 
   }
 
@@ -73,13 +73,13 @@ namespace CGL {
     float x2, float y2,
     Color color) {
     // TODO: Task 1: Implement basic triangle rasterization here, no supersampling
-    // x0 = x0 * (float)sqrt(this->sample_rate);
-    // x1 = x1 * (float)sqrt(this->sample_rate);
-    // x2 = x2 * (float)sqrt(this->sample_rate);
-    //
-    // y0 = y0 * (float)sqrt(this->sample_rate);
-    // y1 = y1 * (float)sqrt(this->sample_rate);
-    // y2 = y2 * (float)sqrt(this->sample_rate);
+    x0 = x0 * (float)sqrt(this->sample_rate);
+    x1 = x1 * (float)sqrt(this->sample_rate);
+    x2 = x2 * (float)sqrt(this->sample_rate);
+
+    y0 = y0 * (float)sqrt(this->sample_rate);
+    y1 = y1 * (float)sqrt(this->sample_rate);
+    y2 = y2 * (float)sqrt(this->sample_rate);
 
     float dx_0 = x1 - x0;
     float dy_0 = y1 - y0;
@@ -91,29 +91,22 @@ namespace CGL {
     float dy_2 = y0 - y2;
 
 
-    // for (int x = 0; x < width; ++x) {
-    //   for (int y = 0; y < height; ++y) {
-    //     float point_x = x + 0.5;
-    //     float point_y = y + 0.5;
-    //     float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-    //     float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-    //     float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-    //     if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-    //       fill_pixel((int)floor(point_x), (int)floor(point_y), color);
-    //     }
-    //   }
-    // }
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
 
-    for (int x = 0; x < width * sqrt(this->sample_rate); ++x) {
-      for (int y = 0; y < height * sqrt(this->sample_rate); ++y) {
-        float point_x = x + 0.5;
-        float point_y = y + 0.5;
-        float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-        float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-        float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-          fill_pixel((int)floor(point_x), (int)floor(point_y), color);
+        for (int mini_x = 0; mini_x < (int)sqrt(this->sample_rate); ++mini_x) {
+          for (int mini_y = 0; mini_y < (int)sqrt(this->sample_rate); ++mini_y) {
+            float point_x = x * sqrt(this->sample_rate) + mini_x + 0.5;
+            float point_y = y * sqrt(this->sample_rate) + mini_y + 0.5;
+            float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
+            float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
+            float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
+            if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
+              sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)] = color;
+            }
+          }
         }
+
       }
     }
 
@@ -215,34 +208,32 @@ namespace CGL {
   void RasterizerImp::resolve_to_framebuffer() {
     // TODO: Task 2: You will likely want to update this function for supersampling support
 
-
-    // for (int x = 0; x < width; ++x) {
-    //   for (int y = 0; y < height; ++y) {
-    //     Color col = sample_buffer[y * width + x];
-    //
-    //     for (int k = 0; k < 3; ++k) {
-    //       this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&col.r)[k] * 255;
-    //     }
-    //   }
-    // }
-
-    for (int x = 0; x < width; ++x) {
-      for (int y = 0; y < height; ++y) {
-        Color main;
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        float temp_r = 0.0;
+        float temp_g = 0.0;
+        float temp_b = 0.0;
         for (int mini_x = 0; mini_x < sqrt(this->sample_rate); ++mini_x) {
           for (int mini_y = 0; mini_y < sqrt(this->sample_rate); ++mini_y) {
-            Color col = sample_buffer[((y * width * this->sample_rate)) + (mini_y * width * sqrt(this->sample_rate)) + ((x * sqrt(this->sample_rate))+mini_x)];
-            main = col;
+            Color col = sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)];
+            temp_r += (float)(&col.r)[0];
+            temp_g += (float)(&col.r)[1];
+            temp_b += (float)(&col.r)[2];
+
           }
         }
+        temp_r = temp_r / (float)this->sample_rate;
+        temp_g = temp_g / (float)this->sample_rate;
+        temp_b = temp_b / (float)this->sample_rate;
 
-        // main = main * (float)(1/(int)this->sample_rate);
+        Color col = Color(temp_r, temp_g, temp_b);
 
         for (int k = 0; k < 3; ++k) {
-          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&main.r)[k] * 255;
+          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&col.r)[k] * 255;
         }
       }
     }
+
 
 
   }
