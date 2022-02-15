@@ -129,7 +129,31 @@ namespace CGL {
   {
     // TODO: Task 4: Rasterize the triangle, calculating barycentric coordinates and using them to interpolate vertex colors across the triangle
     // Hint: You can reuse code from rasterize_triangle
+    float dx_0 = x1 - x0;
+    float dy_0 = y1 - y0;
 
+    float dx_1 = x2 - x1;
+    float dy_1 = y2 - y1;
+
+    float dx_2 = x0 - x2;
+    float dy_2 = y0 - y2;
+
+    for (int x = 0; x < width * sqrt(this->sample_rate); ++x) {
+      for (int y = 0; y < height * sqrt(this->sample_rate); ++y) {
+        float point_x = x + 0.5;
+        float point_y = y + 0.5;
+        float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
+        float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
+        float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
+        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
+          float alpha =  (-(point_x - x1) * dy_1 + (point_y - y1) * dx_1) /(-(x0 - x1) * dy_1 + (y0 - y1) * dx_1);
+          float beta =   (-(point_x - x2) * dy_2 + (point_y - y2) * dx_2)/ (-(x1 - x2) * dy_2 + (y1 - y2) * dx_2);
+          float gamma = 1 - alpha - beta;
+          Color col = c0 * alpha + c1 * beta + c2 * gamma;
+          fill_pixel((int)floor(point_x), (int)floor(point_y), col);
+        }
+      }
+    }
 
 
   }
@@ -204,26 +228,18 @@ namespace CGL {
 
     for (int x = 0; x < width; ++x) {
       for (int y = 0; y < height; ++y) {
-        float temp_r = 0.0;
-        float temp_g = 0.0;
-        float temp_b = 0.0;
+        Color main;
         for (int mini_x = 0; mini_x < sqrt(this->sample_rate); ++mini_x) {
           for (int mini_y = 0; mini_y < sqrt(this->sample_rate); ++mini_y) {
             Color col = sample_buffer[((y * width * this->sample_rate)) + (mini_y * width * sqrt(this->sample_rate)) + ((x * sqrt(this->sample_rate))+mini_x)];
-            temp_r += (float)(&col.r)[0];
-            temp_g += (float)(&col.r)[1];
-            temp_b += (float)(&col.r)[2];
-
+            main = col;
           }
         }
-        temp_r = temp_r / (float)this->sample_rate;
-        temp_g = temp_g / (float)this->sample_rate;
-        temp_b = temp_b / (float)this->sample_rate;
 
-        Color col = Color(temp_r, temp_g, temp_b);
+        // main = main * (float)(1/(int)this->sample_rate);
 
         for (int k = 0; k < 3; ++k) {
-          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&col.r)[k] * 255;
+          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&main.r)[k] * 255;
         }
       }
     }
