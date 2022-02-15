@@ -24,8 +24,6 @@ namespace CGL {
 
     sample_buffer[y * width * this->sample_rate + (x * sqrt(this->sample_rate))] = c;
 
-    // sample_buffer[(y * width * this->sample_rate) + (x * (int)sqrt(this->sample_rate))] = c;
-
   }
 
   // Rasterize a point: simple example to help you start familiarizing
@@ -122,6 +120,15 @@ namespace CGL {
   {
     // TODO: Task 4: Rasterize the triangle, calculating barycentric coordinates and using them to interpolate vertex colors across the triangle
     // Hint: You can reuse code from rasterize_triangle
+
+    x0 = x0 * (float)sqrt(this->sample_rate);
+    x1 = x1 * (float)sqrt(this->sample_rate);
+    x2 = x2 * (float)sqrt(this->sample_rate);
+
+    y0 = y0 * (float)sqrt(this->sample_rate);
+    y1 = y1 * (float)sqrt(this->sample_rate);
+    y2 = y2 * (float)sqrt(this->sample_rate);
+
     float dx_0 = x1 - x0;
     float dy_0 = y1 - y0;
 
@@ -131,23 +138,29 @@ namespace CGL {
     float dx_2 = x0 - x2;
     float dy_2 = y0 - y2;
 
-    for (int x = 0; x < width * sqrt(this->sample_rate); ++x) {
-      for (int y = 0; y < height * sqrt(this->sample_rate); ++y) {
-        float point_x = x + 0.5;
-        float point_y = y + 0.5;
-        float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-        float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-        float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-          float alpha =  (-(point_x - x1) * dy_1 + (point_y - y1) * dx_1) /(-(x0 - x1) * dy_1 + (y0 - y1) * dx_1);
-          float beta =   (-(point_x - x2) * dy_2 + (point_y - y2) * dx_2)/ (-(x1 - x2) * dy_2 + (y1 - y2) * dx_2);
-          float gamma = 1 - alpha - beta;
-          Color col = c0 * alpha + c1 * beta + c2 * gamma;
-          fill_pixel((int)floor(point_x), (int)floor(point_y), col);
+
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
+
+        for (int mini_x = 0; mini_x < (int)sqrt(this->sample_rate); ++mini_x) {
+          for (int mini_y = 0; mini_y < (int)sqrt(this->sample_rate); ++mini_y) {
+            float point_x = x * sqrt(this->sample_rate) + mini_x + 0.5;
+            float point_y = y * sqrt(this->sample_rate) + mini_y + 0.5;
+            float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
+            float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
+            float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
+            if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
+              float alpha =  (-(point_x - x1) * dy_1 + (point_y - y1) * dx_1) /(-(x0 - x1) * dy_1 + (y0 - y1) * dx_1);
+              float beta =   (-(point_x - x2) * dy_2 + (point_y - y2) * dx_2)/ (-(x1 - x2) * dy_2 + (y1 - y2) * dx_2);
+              float gamma = 1 - alpha - beta;
+              Color col = c0 * alpha + c1 * beta + c2 * gamma;
+              sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)] = col;
+            }
+          }
         }
+
       }
     }
-
 
   }
 
