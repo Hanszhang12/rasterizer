@@ -238,7 +238,7 @@ namespace CGL {
         //check to see if in all three planes -> in triangle, or for some reason
         //in none of the three planes -> contradiction -> must be in triangle
         if ((ac >= 0 && ba >= 0 && cb >= 0) || (ac <= 0 && ba <= 0 && cb <= 0)){
-          fill_pixel(x, y, col);
+          sample_buffer[y * width * sqrt(get_sample_rate()) + x] = col;
         }
       }
     }
