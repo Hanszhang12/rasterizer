@@ -34,7 +34,7 @@ namespace CGL {
 
     d_y = d_y * (this->height - 1);
     d_x = d_x * (this->width - 1);
-    
+
     float prologue = max(sqrt(pow(d_x[0], 2) + pow(d_x[1], 2)), sqrt(pow(d_y[0], 2) + pow(d_y[1], 2)));
     float fin = log2(prologue);
     return fin;
@@ -115,7 +115,7 @@ namespace CGL {
         Color onepiece = (1 - (v_check - v)) * color + (v_check - v) * colorx;
 
         Color colory = mip.get_texel(u, v_and1);
-        Color colorxy = mip.get_texel(u_and1, v1);
+        Color colorxy = mip.get_texel(u_and1, v_and1);
         Color twopiece = (1 - (v_check - v)) * colory + (v_check - v) * colorxy;
 
         Color fin = (1 - (u_check - u)) * onepiece + (u_check - u) * twopiece;

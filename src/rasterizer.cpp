@@ -22,9 +22,7 @@ namespace CGL {
     // NOTE: You are not required to implement proper supersampling for points and lines
     // It is sufficient to use the same color for all supersamples of a pixel for points and lines (not triangles)
 
-    // sample_buffer[y * width + x] = c;
-
-    sample_buffer[(y * width * this->sample_rate) + (x * sqrt(this->sample_rate))] = c;
+    sample_buffer[y * width * this->sample_rate + (x * sqrt(this->sample_rate))] = c;
 
   }
 
@@ -69,66 +67,66 @@ namespace CGL {
 
   // Rasterize a triangle.
   void RasterizerImp::rasterize_triangle(float x0, float y0,
-    float x1, float y1,
-    float x2, float y2,
-    Color color) {
-    // TODO: Task 1: Implement basic triangle rasterization here, no supersampling
-    // x0 = x0 * (float)sqrt(this->sample_rate);
-    // x1 = x1 * (float)sqrt(this->sample_rate);
-    // x2 = x2 * (float)sqrt(this->sample_rate);
-    //
-    // y0 = y0 * (float)sqrt(this->sample_rate);
-    // y1 = y1 * (float)sqrt(this->sample_rate);
-    // y2 = y2 * (float)sqrt(this->sample_rate);
+      float x1, float y1,
+      float x2, float y2,
+      Color color) {
+      // TODO: Task 1: Implement basic triangle rasterization here, no supersampling
+      x0 = x0 * (float)sqrt(this->sample_rate);
+      x1 = x1 * (float)sqrt(this->sample_rate);
+      x2 = x2 * (float)sqrt(this->sample_rate);
 
-    float dx_0 = x1 - x0;
-    float dy_0 = y1 - y0;
+      y0 = y0 * (float)sqrt(this->sample_rate);
+      y1 = y1 * (float)sqrt(this->sample_rate);
+      y2 = y2 * (float)sqrt(this->sample_rate);
 
-    float dx_1 = x2 - x1;
-    float dy_1 = y2 - y1;
+      float dx_0 = x1 - x0;
+      float dy_0 = y1 - y0;
 
-    float dx_2 = x0 - x2;
-    float dy_2 = y0 - y2;
+      float dx_1 = x2 - x1;
+      float dy_1 = y2 - y1;
+
+      float dx_2 = x0 - x2;
+      float dy_2 = y0 - y2;
 
 
-    // for (int x = 0; x < width; ++x) {
-    //   for (int y = 0; y < height; ++y) {
-    //     float point_x = x + 0.5;
-    //     float point_y = y + 0.5;
-    //     float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-    //     float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-    //     float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-    //     if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-    //       fill_pixel((int)floor(point_x), (int)floor(point_y), color);
-    //     }
-    //   }
-    // }
+      for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
 
-    for (int x = 0; x < width * sqrt(this->sample_rate); ++x) {
-      for (int y = 0; y < height * sqrt(this->sample_rate); ++y) {
-        float point_x = x + 0.5;
-        float point_y = y + 0.5;
-        float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-        float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-        float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-          fill_pixel((int)floor(point_x), (int)floor(point_y), color);
+          for (int mini_x = 0; mini_x < (int)sqrt(this->sample_rate); ++mini_x) {
+            for (int mini_y = 0; mini_y < (int)sqrt(this->sample_rate); ++mini_y) {
+              float point_x = x * sqrt(this->sample_rate) + mini_x + 0.5;
+              float point_y = y * sqrt(this->sample_rate) + mini_y + 0.5;
+              float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
+              float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
+              float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
+              if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
+                sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)] = color;
+              }
+            }
+          }
+
         }
       }
+
+      // TODO: Task 2: Update to implement super-sampled rasterization
     }
 
-    // TODO: Task 2: Update to implement super-sampled rasterization
 
-
-  }
-
-
-  void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Color c0,
+    void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Color c0,
     float x1, float y1, Color c1,
     float x2, float y2, Color c2)
   {
     // TODO: Task 4: Rasterize the triangle, calculating barycentric coordinates and using them to interpolate vertex colors across the triangle
     // Hint: You can reuse code from rasterize_triangle
+
+    x0 = x0 * (float)sqrt(this->sample_rate);
+    x1 = x1 * (float)sqrt(this->sample_rate);
+    x2 = x2 * (float)sqrt(this->sample_rate);
+
+    y0 = y0 * (float)sqrt(this->sample_rate);
+    y1 = y1 * (float)sqrt(this->sample_rate);
+    y2 = y2 * (float)sqrt(this->sample_rate);
+
     float dx_0 = x1 - x0;
     float dy_0 = y1 - y0;
 
@@ -138,23 +136,29 @@ namespace CGL {
     float dx_2 = x0 - x2;
     float dy_2 = y0 - y2;
 
-    for (int x = 0; x < width * sqrt(this->sample_rate); ++x) {
-      for (int y = 0; y < height * sqrt(this->sample_rate); ++y) {
-        float point_x = x + 0.5;
-        float point_y = y + 0.5;
-        float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
-        float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
-        float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
-        if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
-          float alpha =  (-(point_x - x1) * dy_1 + (point_y - y1) * dx_1) /(-(x0 - x1) * dy_1 + (y0 - y1) * dx_1);
-          float beta =   (-(point_x - x2) * dy_2 + (point_y - y2) * dx_2)/ (-(x1 - x2) * dy_2 + (y1 - y2) * dx_2);
-          float gamma = 1 - alpha - beta;
-          Color col = c0 * alpha + c1 * beta + c2 * gamma;
-          fill_pixel((int)floor(point_x), (int)floor(point_y), col);
+
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
+
+        for (int mini_x = 0; mini_x < (int)sqrt(this->sample_rate); ++mini_x) {
+          for (int mini_y = 0; mini_y < (int)sqrt(this->sample_rate); ++mini_y) {
+            float point_x = x * sqrt(this->sample_rate) + mini_x + 0.5;
+            float point_y = y * sqrt(this->sample_rate) + mini_y + 0.5;
+            float l0 = -(point_x - x0) * dy_0 + (point_y - y0) * dx_0;
+            float l1 = -(point_x - x1) * dy_1 + (point_y - y1) * dx_1;
+            float l2 = -(point_x - x2) * dy_2 + (point_y - y2) * dx_2;
+            if ((l0 >= 0 && l1 >= 0 && l2 >= 0) || (l0 <= 0 && l1 <= 0 && l2 <= 0)) {
+              float alpha =  (-(point_x - x1) * dy_1 + (point_y - y1) * dx_1) /(-(x0 - x1) * dy_1 + (y0 - y1) * dx_1);
+              float beta =   (-(point_x - x2) * dy_2 + (point_y - y2) * dx_2)/ (-(x1 - x2) * dy_2 + (y1 - y2) * dx_2);
+              float gamma = 1 - alpha - beta;
+              Color col = c0 * alpha + c1 * beta + c2 * gamma;
+              sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)] = col;
+            }
+          }
         }
+
       }
     }
-
 
   }
 
@@ -184,7 +188,7 @@ namespace CGL {
     int c_y = (int) (floor(x2));
 
     //first, you have to ensure that the coordinates are within appropriate bounds
-    if (a_x < 0 || a_x >= width * sqrt_sampr || a_y < 0 || a_y >= height * sqrt_sampr || 
+    if (a_x < 0 || a_x >= width * sqrt_sampr || a_y < 0 || a_y >= height * sqrt_sampr ||
     b_x < 0 || b_x >= width * sqrt_sampr || a_y < 0 || a_y >= height * sqrt_sampr ||
     c_x < 0 || c_x >= width * sqrt_sampr || c_y < 0 || c_y >= height * sqrt_sampr) {
       return;
@@ -198,7 +202,7 @@ namespace CGL {
     for (int y = lower_y; y <= upper_y; y++) {
       for (int x = lower_x; x <= upper_x; x++) {
         //construct line equations
-        float ac = -1*(x-a_x + 0.5)*(c_y-a_y) + (y-a_y + 0.5)*(c_x-a_x); 
+        float ac = -1*(x-a_x + 0.5)*(c_y-a_y) + (y-a_y + 0.5)*(c_x-a_x);
         float cb = -1*(x-c_x+ 0.5)*(b_y-c_y) + (y-c_y)*(b_x-c_x);
         float ba = -1*(x-b_x + 0.5)*(a_y-b_y) + (y-b_y + 0.5)*(a_x-b_x);
 
@@ -233,8 +237,8 @@ namespace CGL {
 
         //check to see if in all three planes -> in triangle, or for some reason
         //in none of the three planes -> contradiction -> must be in triangle
-        if ((ac >= 0 && ba >= 0 && cb >= 0) || (ac <= 0 && ba <= 0 && cb <= 0)){ 
-          fill_supersample(x, y, col);
+        if ((ac >= 0 && ba >= 0 && cb >= 0) || (ac <= 0 && ba <= 0 && cb <= 0)){
+          fill_pixel(x, y, col);
         }
       }
     }
@@ -281,40 +285,34 @@ namespace CGL {
   // pixels from the supersample buffer data.
   //
   void RasterizerImp::resolve_to_framebuffer() {
-    // TODO: Task 2: You will likely want to update this function for supersampling support
+  // TODO: Task 2: You will likely want to update this function for supersampling support
 
-
-    // for (int x = 0; x < width; ++x) {
-    //   for (int y = 0; y < height; ++y) {
-    //     Color col = sample_buffer[y * width + x];
-    //
-    //     for (int k = 0; k < 3; ++k) {
-    //       this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&col.r)[k] * 255;
-    //     }
-    //   }
-    // }
-
-    for (int x = 0; x < width; ++x) {
-      for (int y = 0; y < height; ++y) {
-        Color main;
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        float temp_r = 0.0;
+        float temp_g = 0.0;
+        float temp_b = 0.0;
         for (int mini_x = 0; mini_x < sqrt(this->sample_rate); ++mini_x) {
           for (int mini_y = 0; mini_y < sqrt(this->sample_rate); ++mini_y) {
-            Color col = sample_buffer[((y * width * this->sample_rate)) + (mini_y * width * sqrt(this->sample_rate)) + ((x * sqrt(this->sample_rate))+mini_x)];
-            main = col;
+            Color col = sample_buffer[((y * sqrt(this->sample_rate) + mini_y) * width * sqrt(this->sample_rate)) + (x * sqrt(this->sample_rate) + mini_x)];
+            temp_r += (float)(&col.r)[0];
+            temp_g += (float)(&col.r)[1];
+            temp_b += (float)(&col.r)[2];
+
           }
         }
+        temp_r = temp_r / (float)this->sample_rate;
+        temp_g = temp_g / (float)this->sample_rate;
+        temp_b = temp_b / (float)this->sample_rate;
 
-        // main = main * (float)(1/(int)this->sample_rate);
+        Color col = Color(temp_r, temp_g, temp_b);
 
         for (int k = 0; k < 3; ++k) {
-          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&main.r)[k] * 255;
+          this->rgb_framebuffer_target[3 * (y * width + x) + k] = (&col.r)[k] * 255;
         }
       }
     }
-
-
   }
-
   Rasterizer::~Rasterizer() { }
 
 
