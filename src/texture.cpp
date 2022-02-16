@@ -112,11 +112,11 @@ namespace CGL {
 
         Color color = mip.get_texel(u, v);
         Color colorx = mip.get_texel(u_and1, v);
-        Color onepiece = (1 - (v_check - v0)) * color + (v_check - v0) * colorx;
+        Color onepiece = (1 - (v_check - v)) * color + (v_check - v) * colorx;
 
         Color colory = mip.get_texel(u, v_and1);
         Color colorxy = mip.get_texel(u_and1, v1);
-        Color twopiece = (1 - (v_check - v0)) * colory + (v_check - v0) * colorxy;
+        Color twopiece = (1 - (v_check - v)) * colory + (v_check - v) * colorxy;
 
         Color fin = (1 - (u_check - u)) * onepiece + (u_check - u) * twopiece;
         return fin;
