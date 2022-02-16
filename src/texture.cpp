@@ -8,18 +8,36 @@ namespace CGL {
 
   Color Texture::sample(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
-
-
+    float level = get_level(sp);
+    if (sp.lsm == L_LINEAR) {
+      int dist_high = max(0, min((int)mipmap.size() - 1, (int)ceil(level)));
+      Color col_high = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist_high) : sample_bilinear(sp.p_uv, dist_high);
+      int dist_low = max(0, min((int)mipmap.size() - 1, (int)floor(level)));
+      Color col_low = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist_low) : sample_bilinear(sp.p_uv, dist_low);
+      float dist = level - dist_low;
+      return col_low + dist * (col_high + (-1) * col_low);
+    } else if (sp.lsm == L_NEAREST) {
+      int dist = max(0, min((int)mipmap.size() - 1, (int)round(level)));
+      return sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist) : sample_bilinear(sp.p_uv, dist);
+    }
+    else {
+      return sp.psm == P_NEAREST ? sample_nearest(sp.p_uv) : sample_bilinear(sp.p_uv);
+    }
 // return magenta for invalid level
     return Color(1, 0, 1);
   }
 
   float Texture::get_level(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
+    Vector2D d_y = sp.p_dy_uv - sp.p_uv;
+    Vector2D d_x = sp.p_dx_uv - sp.p_uv;
 
-
-
-    return 0;
+    d_y = d_y * (this->height - 1);
+    d_x = d_x * (this->width - 1);
+    
+    float prologue = max(sqrt(pow(d_x[0], 2) + pow(d_x[1], 2)), sqrt(pow(d_y[0], 2) + pow(d_y[1], 2)));
+    float fin = log2(prologue);
+    return fin;
   }
 
   Color MipLevel::get_texel(int tx, int ty) {
@@ -30,25 +48,89 @@ namespace CGL {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
 
+    if (level >= 0) {
+      float u_check = uv[0] * (mip.width - 1);
+      float v_check = uv[1] * (mip.height-1);
 
+      //we have to make sure we are in proper bounds
+      if (u_check < 0){
+        u_check = 0;
+      } else if (u_check >= width){
+        u_check = width-1;
+      }
+      if (v_check < 0){
+        v_check = 0;
+      } else if (v_check >= height){
+        v_check = height-1;
+      }
 
-
-    // return magenta for invalid level
+      if ((u_check < width) && (v_check < height) && (u_check >= 0) && (v_check >= 0)){
+        //round filtered values and cast as integers for the get_texel function
+        int u = round(u_check);
+        int v = round(v_check);
+        return mip.get_texel(u, v);
+      } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+      }
+    } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+    }
+    // should never get to this point, but as a safeguard: if the previous check deemed invalid, return magenta
     return Color(1, 0, 1);
   }
 
   Color Texture::sample_bilinear(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
+    //very similar to sample_nearest
 
+    if (level >= 0) {
+      float u_check = uv[0] * (mip.width - 1);
+      float v_check = uv[1] * (mip.height-1);
 
+      //we have to make sure we are in proper bounds
+      if (u_check < 0){
+        u_check = 0;
+      } else if (u_check >= width){
+        u_check = width-1;
+      }
+      if (v_check < 0){
+        v_check = 0;
+      } else if (v_check >= height){
+        v_check = height-1;
+      }
 
+      if ((u_check < width) && (v_check < height) && (u_check >= 0) && (v_check >= 0)){
+        //round filtered values and cast as integers for the get_texel function
+        int u = floor(u_check);
+        int v = floor(v_check);
+        //round up for the upper bounds of x/y vectors
+        int u_and1 = ceil(u_check);
+        int v_and1 = ceil(v_check);
 
+        Color color = mip.get_texel(u, v);
+        Color colorx = mip.get_texel(u_and1, v);
+        Color onepiece = (1 - (v_check - v0)) * color + (v_check - v0) * colorx;
+
+        Color colory = mip.get_texel(u, v_and1);
+        Color colorxy = mip.get_texel(u_and1, v1);
+        Color twopiece = (1 - (v_check - v0)) * colory + (v_check - v0) * colorxy;
+
+        Color fin = (1 - (u_check - u)) * onepiece + (u_check - u) * twopiece;
+        return fin;
+      } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+      }
+    } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+    }
     // return magenta for invalid level
     return Color(1, 0, 1);
   }
-
-
 
   /****************************************************************************/
 
