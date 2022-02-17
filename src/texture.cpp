@@ -25,13 +25,19 @@ namespace CGL {
     //if lsm nearest then check if psm is bilinear or nearest, act accordingly
     } else if (sp.lsm == L_NEAREST) {
       level = round(level);
-      fin = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, level) : sample_bilinear(sp.p_uv, level);
-      return fin;
+      if (sp.psm == P_NEAREST) {
+        return sample_nearest(sp.p_uv, level);
+      } else {
+        return sample_bilinear(sp.p_uv, level);
+      }
     //if lsm zero then check if psm is bilinear or nearest, act accordingly
     } else if (sp.lsm == L_ZERO) {
       level = 0;
-      fin = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, level) : sample_bilinear(sp.p_uv, level);
-      return fin;
+      if (sp.psm == P_NEAREST) {
+        return sample_nearest(sp.p_uv, level);
+      } else {
+        return sample_bilinear(sp.p_uv, level);
+      }
     }
 // return magenta for invalid level
     return Color(1, 0, 1);
