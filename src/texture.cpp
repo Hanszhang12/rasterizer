@@ -9,29 +9,19 @@ namespace CGL {
   Color Texture::sample(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
     float level = get_level(sp);
-    //make sure we are within bounds
-    if (level > 16 || level < 0) {
-      return Color(1, 0, 1);
-    //if lsm bilinear then check if psm is bilinear or nearest, act accordingly
-    } else if (sp.lsm == L_LINEAR) {
-      float ground = floor(level)
-      float roof = ceil(level)
-      Color col1;
-      Color col2;
-      col1 = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, ground) : sample_bilinear(sp.p_uv, ground);
-      col2 = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, roof) : sample_bilinear(sp.p_uv, roof);
-      //return weighted sum of colors from both edges
-      return (roof - level) * col1 + (level - ground) * col2
-    //if lsm nearest then check if psm is bilinear or nearest, act accordingly
+    if (sp.lsm == L_LINEAR) {
+      int dist_high = max(0, min((int)mipmap.size() - 1, (int)ceil(level)));
+      Color col_high = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist_high) : sample_bilinear(sp.p_uv, dist_high);
+      int dist_low = max(0, min((int)mipmap.size() - 1, (int)floor(level)));
+      Color col_low = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist_low) : sample_bilinear(sp.p_uv, dist_low);
+      float dist = level - dist_low;
+      return col_low + dist * (col_high + (-1) * col_low);
     } else if (sp.lsm == L_NEAREST) {
-      level = round(level)
-      fin = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, level) : sample_bilinear(sp.p_uv, level);
-      return fin
-    //if lsm zero then check if psm is bilinear or nearest, act accordingly
-    } else if (sp.lsm == L_ZERO) {
-      level = 0
-      fin = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, level) : sample_bilinear(sp.p_uv, level);
-      return fin
+      int dist = max(0, min((int)mipmap.size() - 1, (int)round(level)));
+      return sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, dist) : sample_bilinear(sp.p_uv, dist);
+    }
+    else {
+      return sp.psm == P_NEAREST ? sample_nearest(sp.p_uv) : sample_bilinear(sp.p_uv);
     }
 // return magenta for invalid level
     return Color(1, 0, 1);
@@ -57,15 +47,36 @@ namespace CGL {
   Color Texture::sample_nearest(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
-    //make sure we're in appropriate bounds
-    if (level > kMaxMipLevels || level < 0) {
-      return Color(1, 0, 1);
-    }
-    float factor = pow(2, level)
-    int u = (int) round(uv[0] * (width - 1) / factor);
-    int v = (int) round(uv[1] * (height - 1) / factor);
-    return mip.get_texel(u, v)
 
+    if (level >= 0) {
+      float u_check = uv[0] * (mip.width - 1);
+      float v_check = uv[1] * (mip.height-1);
+
+      //we have to make sure we are in proper bounds
+      if (u_check < 0){
+        u_check = 0;
+      } else if (u_check >= width){
+        u_check = width-1;
+      }
+      if (v_check < 0){
+        v_check = 0;
+      } else if (v_check >= height){
+        v_check = height-1;
+      }
+
+      if ((u_check < width) && (v_check < height) && (u_check >= 0) && (v_check >= 0)){
+        //round filtered values and cast as integers for the get_texel function
+        int u = round(u_check);
+        int v = round(v_check);
+        return mip.get_texel(u, v);
+      } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+      }
+    } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+    }
     // should never get to this point, but as a safeguard: if the previous check deemed invalid, return magenta
     return Color(1, 0, 1);
   }
@@ -73,34 +84,50 @@ namespace CGL {
   Color Texture::sample_bilinear(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
-    //similar to nearest, check if within bounds
-    if (level > kMaxMipLevels || level < 0) {
-      return Color(1, 0, 1);
+    //very similar to sample_nearest
+
+    if (level >= 0) {
+      float u_check = uv[0] * (mip.width - 1);
+      float v_check = uv[1] * (mip.height-1);
+
+      //we have to make sure we are in proper bounds
+      if (u_check < 0){
+        u_check = 0;
+      } else if (u_check >= width){
+        u_check = width-1;
+      }
+      if (v_check < 0){
+        v_check = 0;
+      } else if (v_check >= height){
+        v_check = height-1;
+      }
+
+      if ((u_check < width) && (v_check < height) && (u_check >= 0) && (v_check >= 0)){
+        //round filtered values and cast as integers for the get_texel function
+        int u = floor(u_check);
+        int v = floor(v_check);
+        //round up for the upper bounds of x/y vectors
+        int u_and1 = ceil(u_check);
+        int v_and1 = ceil(v_check);
+
+        Color color = mip.get_texel(u, v);
+        Color colorx = mip.get_texel(u_and1, v);
+        Color onepiece = (1 - (v_check - v)) * color + (v_check - v) * colorx;
+
+        Color colory = mip.get_texel(u, v_and1);
+        Color colorxy = mip.get_texel(u_and1, v_and1);
+        Color twopiece = (1 - (v_check - v)) * colory + (v_check - v) * colorxy;
+
+        Color fin = (1 - (u_check - u)) * onepiece + (u_check - u) * twopiece;
+        return fin;
+      } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
+      }
+    } else {
+        // if the previous check deemed invalid, return magenta
+        return Color(1, 0, 1);
     }
-    float factor = pow(2, level)
-    //now compute the 4 vertices to bound
-    float x = (uv[0] * width) / factor
-    float y = (uv[1] * height) / factor
-
-    //need to interpolate in both the x and y direction, and then combine those two to form final estimate
-
-    int left = (int) floor(x)
-    int right = (int) ceil(x)
-    int bot = (int) floor(y)
-    int top = (int) ceil(y)
-
-    Color c = mip.get_texel(left, bot)
-    Color cx = mip.get_texel(right, bot)
-    Color cy = mip.get_texel(left, top)
-    Color cxy = mip.get_texel(right, top)
-
-    float first_ref = ((uv[1] * height) / factor) - bot
-    float sec_ref = ((uv[0] * width) / factor) - left
-    Color col1, Color col2;
-    //y direction
-    col1 = c + (first_ref * (cy + (-1 * c)));
-    col2 = cx + (first_ref * (cxy + (-1 * cx)));
-    return col1 + (sec_ref * (col2 + (-1 * col1)));
     // return magenta for invalid level
     return Color(1, 0, 1);
   }

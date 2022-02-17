@@ -183,9 +183,9 @@ namespace CGL {
     int a_x = (int) (floor(x0));
     int a_y = (int) (floor(y0));
     int b_x = (int) (floor(x1));
-    int b_y = (int) (floor(x1));
+    int b_y = (int) (floor(y1));
     int c_x = (int) (floor(x2));
-    int c_y = (int) (floor(x2));
+    int c_y = (int) (floor(y2));
 
     //first, you have to ensure that the coordinates are within appropriate bounds
     if (a_x < 0 || a_x >= width * sqrt_sampr || a_y < 0 || a_y >= height * sqrt_sampr ||
