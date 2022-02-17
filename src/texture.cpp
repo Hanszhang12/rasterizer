@@ -16,10 +16,10 @@ namespace CGL {
     } else if (sp.lsm == L_LINEAR) {
       int ground = (int) floor(level);
       //CHANGES
-      ground = max(0, min((int)mipmap.size() - 1, ground))
+      ground = max(0, min((int)mipmap.size() - 1, ground));
       int roof = (int) ceil(level);
       //CHANGES
-      roof = max(0, min((int)mipmap.size() - 1, roof))
+      roof = max(0, min((int)mipmap.size() - 1, roof));
 
       Color col1;
       Color col2;
@@ -31,7 +31,7 @@ namespace CGL {
     } else if (sp.lsm == L_NEAREST) {
       level = round(level);
       //CHANGES
-      int value = max(0, min((int)mipmap.size() - 1, (int)level))
+      int value = max(0, min((int)mipmap.size() - 1, (int)level));
       if (sp.psm == P_NEAREST) {
         return sample_nearest(sp.p_uv, value);
       } else {
