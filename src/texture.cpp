@@ -14,8 +14,13 @@ namespace CGL {
       return Color(1, 0, 1);
     //if lsm bilinear then check if psm is bilinear or nearest, act accordingly
     } else if (sp.lsm == L_LINEAR) {
-      float ground = floor(level);
-      float roof = ceil(level);
+      int ground = (int) floor(level);
+      //CHANGES
+      ground = max(0, min((int)mipmap.size() - 1, ground))
+      int roof = (int) ceil(level);
+      //CHANGES
+      roof = max(0, min((int)mipmap.size() - 1, roof))
+
       Color col1;
       Color col2;
       col1 = sp.psm == P_NEAREST ? sample_nearest(sp.p_uv, ground) : sample_bilinear(sp.p_uv, ground);
@@ -25,10 +30,12 @@ namespace CGL {
     //if lsm nearest then check if psm is bilinear or nearest, act accordingly
     } else if (sp.lsm == L_NEAREST) {
       level = round(level);
+      //CHANGES
+      int value = max(0, min((int)mipmap.size() - 1, (int)level))
       if (sp.psm == P_NEAREST) {
-        return sample_nearest(sp.p_uv, level);
+        return sample_nearest(sp.p_uv, value);
       } else {
-        return sample_bilinear(sp.p_uv, level);
+        return sample_bilinear(sp.p_uv, value);
       }
     //if lsm zero then check if psm is bilinear or nearest, act accordingly
     } else if (sp.lsm == L_ZERO) {
