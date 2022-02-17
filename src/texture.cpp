@@ -93,10 +93,9 @@ namespace CGL {
 
     float first_ref = ((uv[1] * height) / factor) - bot;
     float sec_ref = ((uv[0] * width) / factor) - left;
-    Color col1, Color col2;
     //y direction
-    col1 = c + (first_ref * (cy + (-1 * c)));
-    col2 = cx + (first_ref * (cxy + (-1 * cx)));
+    Color col1 = c + (first_ref * (cy + (-1 * c)));
+    Color col2 = cx + (first_ref * (cxy + (-1 * cx)));
     return col1 + (sec_ref * (col2 + (-1 * col1)));
   }
 
